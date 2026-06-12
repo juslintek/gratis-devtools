@@ -5,58 +5,60 @@ namespace Gratis\DevTools;
  * Database migration system.
  * Track schema changes, run migrations up/down, version control for DB.
  */
-final class MigrationManager
-{
+final class MigrationManager {
+
     private const OPTION = 'gratis_devtools_migrations';
 
-    /** Get migration directory. */
-    private static function dir(): string
-    {
+    /** Get (and create) the migration directory. */
+    private static function dir(): string {
         $dir = WP_CONTENT_DIR . '/gratis-migrations';
-        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        if (!is_dir($dir)) {
+            wp_mkdir_p($dir);
+        }
         return $dir;
     }
 
     /** Create a new migration file. */
-    public static function create(string $name): string
-    {
-        $timestamp = date('YmdHis');
-        $slug = sanitize_file_name($name);
-        $filename = "{$timestamp}_{$slug}.php";
-        $path = self::dir() . "/{$filename}";
+    public static function create(string $name): string {
+        $timestamp = gmdate('YmdHis');
+        $slug      = sanitize_file_name($name);
+        $filename  = "{$timestamp}_{$slug}.php";
+        $path      = self::dir() . "/{$filename}";
 
         $template = "<?php\n// Migration: {$name}\n// Created: " . gmdate('c') . "\n\n"
             . "return [\n"
             . "    'up' => function () {\n"
             . "        global \$wpdb;\n"
-            . "        // \$wpdb->query(\"ALTER TABLE ...\");\n"
+            . "        // \$wpdb->query( \"ALTER TABLE ...\" );\n"
             . "    },\n"
             . "    'down' => function () {\n"
             . "        global \$wpdb;\n"
-            . "        // \$wpdb->query(\"ALTER TABLE ...\");\n"
+            . "        // \$wpdb->query( \"ALTER TABLE ...\" );\n"
             . "    },\n"
             . "];\n";
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- writing a developer-authored migration scaffold to a known local path; WP_Filesystem is unavailable this early in WP-CLI context.
         file_put_contents($path, $template);
         return $filename;
     }
 
     /** Run pending migrations. */
-    public static function migrate(): array
-    {
-        $ran = get_option(self::OPTION, []);
-        $files = glob(self::dir() . '/*.php');
+    public static function migrate(): array {
+        $ran   = get_option(self::OPTION, []);
+        $files = glob(self::dir() . '/*.php') ?: [];
         sort($files);
 
         $results = [];
         foreach ($files as $file) {
             $name = basename($file);
-            if (in_array($name, $ran)) continue;
+            if (in_array($name, $ran, true)) {
+                continue;
+            }
 
             $migration = require $file;
             if (isset($migration['up']) && is_callable($migration['up'])) {
                 ($migration['up'])();
-                $ran[] = $name;
+                $ran[]     = $name;
                 $results[] = $name;
             }
         }
@@ -66,10 +68,11 @@ final class MigrationManager
     }
 
     /** Rollback last migration. */
-    public static function rollback(): ?string
-    {
+    public static function rollback(): ?string {
         $ran = get_option(self::OPTION, []);
-        if (empty($ran)) return null;
+        if (empty($ran)) {
+            return null;
+        }
 
         $last = array_pop($ran);
         $file = self::dir() . "/{$last}";
@@ -85,11 +88,10 @@ final class MigrationManager
     }
 
     /** Get migration status. */
-    public static function status(): array
-    {
-        $ran = get_option(self::OPTION, []);
-        $files = glob(self::dir() . '/*.php');
-        $all = array_map('basename', $files ?: []);
+    public static function status(): array {
+        $ran     = get_option(self::OPTION, []);
+        $files   = glob(self::dir() . '/*.php') ?: [];
+        $all     = array_map('basename', $files);
         $pending = array_diff($all, $ran);
         return ['ran' => $ran, 'pending' => array_values($pending), 'total' => count($all)];
     }
