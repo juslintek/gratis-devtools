@@ -63,7 +63,7 @@ final class MigrationManager {
             }
         }
 
-        update_option(self::OPTION, $ran);
+        update_option(self::OPTION, $ran, false);
         return $results;
     }
 
@@ -83,7 +83,7 @@ final class MigrationManager {
             }
         }
 
-        update_option(self::OPTION, $ran);
+        update_option(self::OPTION, $ran, false);
         return $last;
     }
 

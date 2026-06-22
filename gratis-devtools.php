@@ -23,6 +23,16 @@ define('GRATIS_DEVTOOLS_URL', plugin_dir_url(__FILE__));
 require_once __DIR__ . '/autoload.php';
 
 add_action('plugins_loaded', function () {
+    // One-time migration: disable autoload on growing options.
+    if (!get_option('gratis_devtools_autoload_fixed')) {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update($wpdb->options, ['autoload' => 'no'], ['option_name' => 'gratis_devtools_stagings']);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->update($wpdb->options, ['autoload' => 'no'], ['option_name' => 'gratis_devtools_migrations']);
+        update_option('gratis_devtools_autoload_fixed', 1);
+    }
+
     \Gratis\DevTools\DebugBar::init();
     \Gratis\DevTools\Settings::registerActions();
 

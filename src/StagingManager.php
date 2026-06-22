@@ -53,7 +53,7 @@ final class StagingManager {
 
         $stagings        = get_option(self::OPTION, []);
         $stagings[$name] = ['prefix' => $stagingPrefix, 'tables' => $copied, 'created' => gmdate('c')];
-        update_option(self::OPTION, $stagings);
+        update_option(self::OPTION, $stagings, false);
 
         return ['name' => $name, 'prefix' => $stagingPrefix, 'tables' => $copied];
     }
@@ -76,7 +76,7 @@ final class StagingManager {
         }
 
         unset($stagings[$name]);
-        update_option(self::OPTION, $stagings);
+        update_option(self::OPTION, $stagings, false);
         return true;
     }
 
