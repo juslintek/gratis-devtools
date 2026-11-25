@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Gratis\DevTools;
 
+defined('ABSPATH') || exit;
 /**
  * Lightweight debug bar.
  *

@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace Gratis\DevTools;
 
+defined('ABSPATH') || exit;
 /**
  * Database migration system.
  * Track schema changes, run migrations up/down, version control for DB.
