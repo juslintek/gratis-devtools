@@ -1,16 +1,13 @@
 <?php declare(strict_types=1);
 namespace Gratis\DevTools;
 
+defined('ABSPATH') || exit;
+
 /**
  * Staging environment manager.
  *
  * Creates a copy of the database with a different table prefix for safe
- * testing. What WP Engine charges $20/mo for. Free in Gratis.
- *
- * Table identifiers cannot be bound with $wpdb->prepare(), so every
- * identifier is whitelisted with preg_replace() to alphanumerics/underscore
- * before interpolation, and each direct query carries the documented
- * custom-table phpcs ignores.
+ * testing. Table identifiers are whitelisted and bound with %i placeholders.
  */
 final class StagingManager {
 
@@ -28,19 +25,19 @@ final class StagingManager {
         $name          = self::ident($name);
         $stagingPrefix = self::ident("stg_{$name}_");
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- table identifiers cannot be bound; whitelisted above.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table listing for staging clone.
         $tables = $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($prefix) . '%'));
         $copied = 0;
 
         foreach ($tables as $table) {
             $table    = self::ident($table);
             $newTable = self::ident(str_replace($prefix, $stagingPrefix, $table));
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- table identifiers cannot be bound; whitelisted via self::ident().
-            $wpdb->query("DROP TABLE IF EXISTS `{$newTable}`");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- whitelisted identifiers.
-            $wpdb->query("CREATE TABLE `{$newTable}` LIKE `{$table}`");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- whitelisted identifiers.
-            $wpdb->query("INSERT INTO `{$newTable}` SELECT * FROM `{$table}`");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- intentional staging table clone.
+            $wpdb->query($wpdb->prepare('DROP TABLE IF EXISTS %i', $newTable));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- intentional staging table clone.
+            $wpdb->query($wpdb->prepare('CREATE TABLE %i LIKE %i', $newTable, $table));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- intentional staging table clone.
+            $wpdb->query($wpdb->prepare('INSERT INTO %i SELECT * FROM %i', $newTable, $table));
             ++$copied;
         }
 
@@ -67,12 +64,12 @@ final class StagingManager {
         }
 
         $prefix = self::ident($stagings[$name]['prefix']);
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- whitelisted prefix.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- table listing for staging teardown.
         $tables = $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($prefix) . '%'));
         foreach ($tables as $table) {
             $table = self::ident($table);
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- whitelisted identifier.
-            $wpdb->query("DROP TABLE IF EXISTS `{$table}`");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- intentional staging teardown.
+            $wpdb->query($wpdb->prepare('DROP TABLE IF EXISTS %i', $table));
         }
 
         unset($stagings[$name]);

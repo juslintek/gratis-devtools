@@ -2,9 +2,9 @@
 /**
  * Plugin Name: Gratis DevTools
  * Plugin URI: https://github.com/juslintek/gratis-devtools
- * Description: WP-CLI helpers, an admin-bar debug bar, an environment-info page, staging environments, and database migrations. What WP Engine ($20/mo) and Kinsta ($35/mo) charge for.
+ * Description: WP-CLI helpers, an admin-bar debug bar, an environment-info page, staging environments, and database migrations.
  * Version: 1.0.0
- * Requires at least: 6.0
+ * Requires at least: 6.2
  * Requires PHP: 8.1
  * Author: Linas Jusys
  * Author URI: https://github.com/juslintek

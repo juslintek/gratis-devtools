@@ -1,7 +1,7 @@
 === Gratis DevTools ===
 Contributors: juslintek
 Tags: developer, wp-cli, debug, staging, migrations
-Requires at least: 6.0
+Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 1.0.0
@@ -41,7 +41,7 @@ Yes. Everything is free — no "Pro" version, no locked features, and no nag scr
 
 = Does this plugin make external HTTP requests? =
 
-No. Unless you explicitly configure an external service (such as a CDN or SMTP host), the plugin does not phone home or send analytics.
+No. This plugin runs entirely locally and does not phone home or send analytics.
 
 = Where do I get support? =
 
